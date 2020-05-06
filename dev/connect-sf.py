@@ -22,9 +22,9 @@ cur = conn.cursor()
 # finally:
 #     cur.close()
 
-
 import pandas as pd
 
+query = 'SELECT date_week, starts, stops FROM WEEKLY_STATISTICS order by date_week'
 def fetch_pandas_old(cur, sql):
     cur.execute(sql)
     rows = 0
@@ -32,16 +32,18 @@ def fetch_pandas_old(cur, sql):
         dat = cur.fetchmany(50000)
         if not dat:
             break
-        df = pd.DataFrame(dat, columns=cur.description)
+        df = pd.DataFrame(dat, columns=[x[0] for x in cur.description])
+        # df = pd.DataFrame(dat)
         rows += df.shape[0]
-    print(df)
+    return(df)
+from_pd = fetch_pandas_old(cur, query)
 
-# import pandas as pd
-# 
-# def fetch_pandas_sqlalchemy(sql):
-#     rows = 0
-#     for chunk in pd.read_sql_query(sql, engine, chunksize=50000):
-#         rows += chunk.shape[0]
-#     print(rows)
+def fetch_pandas_sqlalchemy(sql):
+    rows = 0
+    for chunk in pd.read_sql_query(sql, conn, chunksize=50000):
+        rows += chunk.shape[0]
+    return(chunk)
 
-fetch_pandas_old(cur, 'SELECT date_week, starts, stops FROM WEEKLY_STATISTICS')
+from_sql = fetch_pandas_sqlalchemy(query)
+
+print(from_pd.equals(from_sql))
