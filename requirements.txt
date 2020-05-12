@@ -27,3 +27,5 @@ ipywidgets==7.5.1
 
 # pandas support for snowflake connector
 snowflake-connector-python[pandas]==2.2.5
+
+streamlit==0.59.0

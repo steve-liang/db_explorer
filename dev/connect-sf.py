@@ -1,6 +1,9 @@
 import snowflake.connector
 import os
 
+import pandas as pd
+import time
+
 conn = snowflake.connector.connect(
             user=os.getenv('SNOWFLAKE_USER'),
             password=os.getenv('SNOWFLAKE_PASSWORD'),
@@ -22,21 +25,22 @@ cur = conn.cursor()
 # finally:
 #     cur.close()
 
-import pandas as pd
-
-query = 'SELECT date_week, starts, stops FROM WEEKLY_STATISTICS order by date_week'
-def fetch_pandas_old(cur, sql):
+query = 'SELECT * FROM stg_starts order by date'
+cur.execute(query)
+def fetch_pandas_new(cur, sql):
     cur.execute(sql)
-    rows = 0
-    while True:
-        dat = cur.fetchmany(50000)
-        if not dat:
-            break
-        df = pd.DataFrame(dat, columns=[x[0] for x in cur.description])
-        # df = pd.DataFrame(dat)
-        rows += df.shape[0]
+
+    dat = cur.fetchmany(10000)
+    df = pd.DataFrame(dat, columns=[x[0] for x in cur.description])
+    df = pd.DataFrame(dat)
     return(df)
-from_pd = fetch_pandas_old(cur, query)
+
+t = time.time()
+from_pd = fetch_pandas_new(cur, query)
+elapsed = time.time() - t
+print(elapsed)
+
+
 
 def fetch_pandas_sqlalchemy(sql):
     rows = 0
